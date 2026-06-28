@@ -62,8 +62,9 @@ public class StaffCrudServlet extends HttpServlet {
         staff.setEmail(request.getParameter("email").trim());
         staff.setIsActive(Boolean.parseBoolean(request.getParameter("isActive")));
         if ("create".equals(action)) {
-            // Password is only captured during creation and is not trimmed.
-            staff.setPassword(request.getParameter("password"));
+            // Hash password before saving
+            String rawPassword = request.getParameter("password");
+            staff.setPassword(org.mindrot.jbcrypt.BCrypt.hashpw(rawPassword, org.mindrot.jbcrypt.BCrypt.gensalt()));
         }
 
         Role role = new Role();

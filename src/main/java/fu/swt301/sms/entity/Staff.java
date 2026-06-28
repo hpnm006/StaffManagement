@@ -9,6 +9,8 @@ public class Staff {
     private String password;
     private Role role; // Changed from String to Role
     private boolean isActive;
+    private int failedAttempts;
+    private java.sql.Timestamp lockoutTime;
 
     public int getStaffID() {
         return staffID;
@@ -72,5 +74,21 @@ public class Staff {
 
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public void setFailedAttempts(int failedAttempts) {
+        this.failedAttempts = failedAttempts;
+    }
+
+    public java.sql.Timestamp getLockoutTime() {
+        return lockoutTime;
+    }
+
+    public void setLockoutTime(java.sql.Timestamp lockoutTime) {
+        this.lockoutTime = lockoutTime;
     }
 }

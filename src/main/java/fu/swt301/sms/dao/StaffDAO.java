@@ -10,6 +10,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Data Access Object (DAO) for the Staff entity.
@@ -17,6 +19,8 @@ import java.util.List;
  * It handles all CRUD (Create, Read, Update, Delete) operations as well as other specific queries.
  */
 public class StaffDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(StaffDAO.class.getName());
 
     /**
      * A private helper method to map a row from the ResultSet to a Staff object.
@@ -34,6 +38,8 @@ public class StaffDAO {
         staff.setPhoneNumber(rs.getString("PhoneNumber"));
         staff.setEmail(rs.getString("Email"));
         staff.setIsActive(rs.getBoolean("IsActive"));
+        staff.setFailedAttempts(rs.getInt("FailedAttempts"));
+        staff.setLockoutTime(rs.getTimestamp("LockoutTime"));
 
         Role role = new Role();
         role.setRoleID(rs.getInt("Role_ID"));
@@ -111,11 +117,21 @@ public class StaffDAO {
      * @return A populated Staff object if authentication is successful, null otherwise.
      */
     public Staff checkLogin(String email, String password) {
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Email = ? AND s.Password = ?";
+        // This method is deprecated by AuthService, but kept for backward compatibility if needed.
+        // It should ideally be removed, but I will just return null to force use of AuthService.
+        return null;
+    }
+
+    /**
+     * Retrieves a staff member by their email.
+     * @param email The user's email.
+     * @return A populated Staff object if found, null otherwise.
+     */
+    public Staff getStaffByEmail(String email) {
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Email = ?";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
-            ps.setString(2, password);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return extractStaffFromResultSet(rs);
@@ -125,6 +141,25 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Updates the login attempt details for a user.
+     * @param staffId The ID of the staff member.
+     * @param attempts The new failed attempts count.
+     * @param lockoutTime The lockout time (or null if not locked).
+     */
+    public void updateLoginAttempts(int staffId, int attempts, java.sql.Timestamp lockoutTime) {
+        String sql = "UPDATE Staff SET FailedAttempts = ?, LockoutTime = ? WHERE StaffID = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attempts);
+            ps.setTimestamp(2, lockoutTime);
+            ps.setInt(3, staffId);
+            ps.executeUpdate();
+        } catch (ClassNotFoundException | SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating login attempts", e);
+        }
     }
 
     /**
@@ -157,7 +192,7 @@ public class StaffDAO {
                 }
             }
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting staff by filter", e);
         }
         return staffList;
     }
@@ -167,7 +202,7 @@ public class StaffDAO {
      * @param staff The Staff object containing the data to be inserted.
      */
     public void createStaff(Staff staff) {
-        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, staff.getFullName());
@@ -179,7 +214,7 @@ public class StaffDAO {
             ps.setBoolean(7, staff.isIsActive());
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error creating staff", e);
         }
     }
 
@@ -201,7 +236,7 @@ public class StaffDAO {
             ps.setInt(7, staff.getStaffID());
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error updating staff", e);
         }
     }
 
@@ -216,7 +251,7 @@ public class StaffDAO {
             ps.setInt(1, staffId);
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error deleting staff", e);
         }
     }
 

@@ -1,6 +1,7 @@
 package fu.swt301.sms.servlet;
 
-import fu.swt301.sms.dao.StaffDAO;
+import fu.swt301.sms.service.AuthService;
+import fu.swt301.sms.service.AuthException;
 import fu.swt301.sms.entity.Staff;
 
 import jakarta.servlet.ServletException;
@@ -14,12 +15,12 @@ import java.io.IOException;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    // Tạo DAO dưới dạng thuộc tính để Mockito có thể mock
-    private StaffDAO staffDAO = new StaffDAO();
+    // Tạo Service dưới dạng thuộc tính
+    private AuthService authService = new AuthService();
 
     // Setter dùng cho Unit Test
-    public void setStaffDAO(StaffDAO staffDAO) {
-        this.staffDAO = staffDAO;
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
     }
 
     @Override
@@ -30,21 +31,14 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        Staff staff = staffDAO.checkLogin(email, password);
-
-        if (staff != null) {
-
+        try {
+            Staff staff = authService.login(email, password);
             HttpSession session = request.getSession();
             session.setAttribute("user", staff);
-
             response.sendRedirect("staff-list");
-
-        } else {
-
-            request.setAttribute("error", "Invalid email or password");
-
-            request.getRequestDispatcher("login.jsp")
-                    .forward(request, response);
+        } catch (AuthException e) {
+            request.setAttribute("error", e.getMessage());
+            request.getRequestDispatcher("login.jsp").forward(request, response);
         }
     }
 

@@ -9,6 +9,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
  * This listener class is automatically instantiated and invoked by the web container when the application starts up.
@@ -20,6 +23,8 @@ import java.sql.SQLException;
 @WebListener
 public class DataInitializer implements ServletContextListener {
 
+    private static final Logger LOGGER = Logger.getLogger(DataInitializer.class.getName());
+
     /**
      * This method is called by the container when the web application is first started.
      * It orchestrates the database initialization process.
@@ -29,7 +34,7 @@ public class DataInitializer implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         try (Connection conn = DBUtils.getConnection()) {
             // Step 1: Ensure database tables are created before proceeding.
-            System.out.println("Checking database schema...");
+            LOGGER.info("Checking database schema...");
             createRoleTableIfNotExists(conn);
             createStaffTableIfNotExists(conn);
 
@@ -44,16 +49,16 @@ public class DataInitializer implements ServletContextListener {
 
             // Step 3: If no data exists, insert the default roles and a default admin user.
             if (!dataExists) {
-                System.out.println("No data found. Initializing default data...");
+                LOGGER.info("No data found. Initializing default data...");
                 insertDefaultData(conn);
             } else {
-                System.out.println("Data already exists. Skipping initialization.");
+                LOGGER.info("Data already exists. Skipping initialization.");
             }
 
         } catch (SQLException | ClassNotFoundException e) {
             // If any database error occurs during initialization, log it and throw a RuntimeException
             // to halt the application's startup, as it cannot function without a proper database setup.
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database initialization failed", e);
             throw new RuntimeException("Failed to initialize database.", e);
         }
     }
@@ -78,14 +83,14 @@ public class DataInitializer implements ServletContextListener {
         }
 
         if (!tableExists) {
-            System.out.println("Table 'Role' not found. Creating table...");
+            LOGGER.info("Table 'Role' not found. Creating table...");
             String createSQL = "CREATE TABLE Role (" +
                                "Role_ID INT PRIMARY KEY, " +
                                "Role_Name NVARCHAR(50) NOT NULL UNIQUE" +
                                ")";
             try (PreparedStatement ps = conn.prepareStatement(createSQL)) {
                 ps.execute();
-                System.out.println("Table 'Role' created.");
+                LOGGER.info("Table 'Role' created.");
             }
         }
     }
@@ -111,7 +116,7 @@ public class DataInitializer implements ServletContextListener {
         }
 
         if (!tableExists) {
-            System.out.println("Table 'Staff' not found. Creating table...");
+            LOGGER.info("Table 'Staff' not found. Creating table...");
             String createSQL = "CREATE TABLE Staff (" +
                                "StaffID INT PRIMARY KEY IDENTITY(1,1), " +
                                "FullName NVARCHAR(100) NOT NULL, " +
@@ -121,11 +126,13 @@ public class DataInitializer implements ServletContextListener {
                                "Password VARCHAR(255) NOT NULL, " +
                                "Role_ID INT NOT NULL, " +
                                "IsActive BIT NOT NULL, " +
+                               "FailedAttempts INT DEFAULT 0, " +
+                               "LockoutTime DATETIME NULL, " +
                                "CONSTRAINT FK_Staff_Role FOREIGN KEY (Role_ID) REFERENCES Role(Role_ID)" +
                                ")";
             try (PreparedStatement ps = conn.prepareStatement(createSQL)) {
                 ps.execute();
-                System.out.println("Table 'Staff' created.");
+                LOGGER.info("Table 'Staff' created.");
             }
         }
     }
@@ -148,21 +155,21 @@ public class DataInitializer implements ServletContextListener {
             ps.addBatch();
 
             ps.executeBatch();
-            System.out.println("Default roles inserted.");
+            LOGGER.info("Default roles inserted.");
         }
 
         // Insert a default administrator user for initial login.
-        // IMPORTANT: The password here is plain text. In a real-world application, this should be hashed.
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+        // IMPORTANT: The password here is hashed using BCrypt.
+        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)")) {
             ps.setString(1, "Admin User");
             ps.setBoolean(2, true); // true for Male
             ps.setString(3, "0123456789");
             ps.setString(4, "admin@example.com");
-            ps.setString(5, "admin123"); // WARNING: Plain text password
+            ps.setString(5, BCrypt.hashpw("admin123", BCrypt.gensalt())); // Hashed password
             ps.setInt(6, 1); // Role_ID for Admin
             ps.setBoolean(7, true); // IsActive
             ps.executeUpdate();
-            System.out.println("Default admin user inserted.");
+            LOGGER.info("Default admin user inserted.");
         }
     }
 

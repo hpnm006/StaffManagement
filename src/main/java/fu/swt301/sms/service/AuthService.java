@@ -24,6 +24,8 @@ public class AuthService {
             throw new AuthException("Invalid email or password");
         }
 
+        boolean hadFailedAttempts = staff.getFailedAttempts() > 0 || staff.getLockoutTime() != null;
+
         // Check if locked out
         if (staff.getLockoutTime() != null) {
             long currentTime = System.currentTimeMillis();
@@ -42,7 +44,7 @@ public class AuthService {
         // Verify password
         if (BCrypt.checkpw(password, staff.getPassword())) {
             // Success
-            if (staff.getFailedAttempts() > 0 || staff.getLockoutTime() != null) {
+            if (hadFailedAttempts) {
                 staff.setFailedAttempts(0);
                 staff.setLockoutTime(null);
                 staffDAO.updateLoginAttempts(staff.getStaffID(), 0, null);

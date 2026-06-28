@@ -130,8 +130,19 @@ public class StaffDAO {
      * @return A populated Staff object if authentication is successful, null otherwise.
      */
     public Staff checkLogin(String email, String password) {
-        // This method is deprecated by AuthService, but kept for backward compatibility if needed.
-        // It should ideally be removed, but I will just return null to force use of AuthService.
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Email = ? AND s.Password = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return extractStaffFromResultSet(rs);
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -217,7 +228,7 @@ public class StaffDAO {
     public void createStaff(Staff staff) {
         String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime, StaffCode, DateOfBirth, Department, Position, Salary, HireDate) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, staff.getFullName());
             ps.setBoolean(2, staff.isGender());
             ps.setString(3, staff.getPhoneNumber());
@@ -232,6 +243,11 @@ public class StaffDAO {
             ps.setInt(12, staff.getSalary());
             ps.setDate(13, staff.getHireDate() != null ? java.sql.Date.valueOf(staff.getHireDate()) : null);
             ps.executeUpdate();
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    staff.setStaffID(generatedKeys.getInt(1));
+                }
+            }
         } catch (ClassNotFoundException | SQLException e) {
             LOGGER.log(Level.SEVERE, "Error creating staff", e);
         }
@@ -422,5 +438,65 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public int getStaffCountByFilter(String name, String status) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Staff s WHERE 1=1");
+        if (name != null && !name.isEmpty()) {
+            sql.append(" AND s.FullName LIKE ?");
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND s.IsActive = ?");
+        }
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            if (name != null && !name.isEmpty()) {
+                ps.setString(paramIndex++, "%" + name + "%");
+            }
+            if (status != null && !status.isEmpty()) {
+                ps.setBoolean(paramIndex, Boolean.parseBoolean(status));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<Staff> getStaffByFilterPaginated(String name, String status, int offset, int limit) {
+        List<Staff> staffList = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE 1=1");
+        if (name != null && !name.isEmpty()) {
+            sql.append(" AND s.FullName LIKE ?");
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND s.IsActive = ?");
+        }
+        sql.append(" ORDER BY s.StaffID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            if (name != null && !name.isEmpty()) {
+                ps.setString(paramIndex++, "%" + name + "%");
+            }
+            if (status != null && !status.isEmpty()) {
+                ps.setBoolean(paramIndex++, Boolean.parseBoolean(status));
+            }
+            ps.setInt(paramIndex++, offset);
+            ps.setInt(paramIndex, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    staffList.add(extractStaffFromResultSet(rs));
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return staffList;
     }
 }

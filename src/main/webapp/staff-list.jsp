@@ -59,6 +59,23 @@
         </c:forEach>
         </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                <a class="page-link" href="staff-list?page=${currentPage - 1}&searchName=${searchName}&searchStatus=${searchStatus}">Previous</a>
+            </li>
+            <c:forEach var="i" begin="1" end="${totalPages}">
+                <li class="page-item ${currentPage == i ? 'active' : ''}">
+                    <a class="page-link" href="staff-list?page=${i}&searchName=${searchName}&searchStatus=${searchStatus}">${i}</a>
+                </li>
+            </c:forEach>
+            <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="staff-list?page=${currentPage + 1}&searchName=${searchName}&searchStatus=${searchStatus}">Next</a>
+            </li>
+        </ul>
+    </nav>
 </div>
 </body>
 </html>

@@ -4,6 +4,7 @@ import fu.swt301.sms.dao.RoleDAO;
 import fu.swt301.sms.dao.StaffDAO;
 import fu.swt301.sms.entity.Role;
 import fu.swt301.sms.entity.Staff;
+import fu.swt301.sms.service.StaffService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,13 +22,16 @@ import java.util.List;
  */
 @WebServlet("/staff-crud")
 public class StaffCrudServlet extends HttpServlet {
-    // DAO instances used by the servlet.
-// They are declared as fields so they can be replaced with mock objects during unit testing.
-
+    // DAO and Service instances used by the servlet.
+    private StaffService staffService = new StaffService();
     private StaffDAO staffDAO = new StaffDAO();
     private RoleDAO roleDAO = new RoleDAO();
 
-// Setter methods for dependency injection in unit tests.
+    // Setter methods for dependency injection in unit tests.
+    public void setStaffService(StaffService staffService) {
+        this.staffService = staffService;
+    }
+
     public void setStaffDAO(StaffDAO staffDAO) {
         this.staffDAO = staffDAO;
     }
@@ -71,23 +75,22 @@ public class StaffCrudServlet extends HttpServlet {
         role.setRoleID(Integer.parseInt(request.getParameter("roleID")));
         staff.setRole(role);
 
-        // --- Step 2: Perform server-side validation for uniqueness ---
+        // --- Step 2: Perform server-side validation and persistence via service ---
         String errorMessage = null;
         try {
-            if (staffDAO.isEmailExists(staff.getEmail(), staff.getStaffID())) {
-                errorMessage = "Email already exists. Please choose another one.";
-            } else if (staffDAO.isFullNameExists(staff.getFullName(), staff.getStaffID())) {
-                errorMessage = "Full name already exists. Please choose another one.";
-            } else if (staffDAO.isPhoneNumberExists(staff.getPhoneNumber(), staff.getStaffID())) {
-                errorMessage = "Phone number already exists. Please choose another one.";
+            if ("create".equals(action)) {
+                staffService.createStaff(staff);
+            } else if ("update".equals(action)) {
+                staffService.updateStaff(staff);
             }
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (IllegalArgumentException e) {
+            errorMessage = e.getMessage();
+        } catch (RuntimeException e) {
             e.printStackTrace();
             errorMessage = "Database error during validation.";
         }
 
         // --- Step 3: Handle validation failure ---
-        // If an error message was set, it means validation failed.
         if (errorMessage != null) {
             // Add the error message and the user-submitted data back into the request.
             request.setAttribute("errorMessage", errorMessage);
@@ -98,21 +101,11 @@ public class StaffCrudServlet extends HttpServlet {
             request.setAttribute("roleList", roleList);
 
             // Forward the request back to the form page to display the error and the preserved data.
-            // Using forward is crucial here instead of redirect to maintain the request attributes.
             request.getRequestDispatcher("staff-form.jsp").forward(request, response);
-            return; // Stop further processing to prevent the invalid data from being saved.
-        }
-
-        // --- Step 4: Handle validation success ---
-        // If there were no errors, proceed with the database operation.
-        if ("create".equals(action)) {
-            staffDAO.createStaff(staff);
-        } else if ("update".equals(action)) {
-            staffDAO.updateStaff(staff);
+            return; // Stop further processing to prevent redirect.
         }
 
         // After a successful operation, redirect the user to the staff list page.
-        // A redirect is used to prevent form resubmission issues if the user refreshes the page.
         response.sendRedirect("staff-list");
     }
 

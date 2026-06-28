@@ -23,6 +23,12 @@ public class StaffDAOTest {
     public void setUp() {
         staffDAO = new StaffDAO();
         roleDAO = new RoleDAO();
+        try (java.sql.Connection conn = fu.swt301.sms.utils.DBUtils.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("DELETE FROM Staff");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private Staff sample() {

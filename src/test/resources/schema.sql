@@ -12,6 +12,8 @@ CREATE TABLE Staff (
     Password VARCHAR(100),
     Role_ID INT,
     IsActive BIT,
+    FailedAttempts INT DEFAULT 0,
+    LockoutTime TIMESTAMP NULL,
     StaffCode VARCHAR(20),
     DateOfBirth DATE,
     Department VARCHAR(100),

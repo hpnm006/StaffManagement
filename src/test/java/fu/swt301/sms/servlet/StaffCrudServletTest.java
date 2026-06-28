@@ -4,6 +4,7 @@ import fu.swt301.sms.dao.RoleDAO;
 import fu.swt301.sms.dao.StaffDAO;
 import fu.swt301.sms.entity.Role;
 import fu.swt301.sms.entity.Staff;
+import fu.swt301.sms.service.StaffService;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,9 @@ import static org.mockito.Mockito.*;
 public class StaffCrudServletTest {
 
     @Mock
+    private StaffService staffService;
+
+    @Mock
     private StaffDAO staffDAO;
 
     @Mock
@@ -45,13 +49,13 @@ public class StaffCrudServletTest {
 
     @BeforeEach
     void setUp() {
+        servlet.setStaffService(staffService);
         servlet.setStaffDAO(staffDAO);
         servlet.setRoleDAO(roleDAO);
     }
 
     @Test
     void testCreateStaffSuccess() throws Exception {
-
         when(request.getParameter("action")).thenReturn("create");
         when(request.getParameter("staffID")).thenReturn("");
         when(request.getParameter("fullName")).thenReturn("Nguyen Van A");
@@ -62,25 +66,14 @@ public class StaffCrudServletTest {
         when(request.getParameter("roleID")).thenReturn("1");
         when(request.getParameter("isActive")).thenReturn("true");
 
-        when(staffDAO.isEmailExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isFullNameExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isPhoneNumberExists(anyString(), anyInt()))
-                .thenReturn(false);
-
         servlet.doPost(request, response);
 
-        verify(staffDAO).createStaff(any(Staff.class));
-
+        verify(staffService).createStaff(any(Staff.class));
         verify(response).sendRedirect("staff-list");
     }
 
     @Test
     void testUpdateStaffSuccess() throws Exception {
-
         when(request.getParameter("action")).thenReturn("update");
         when(request.getParameter("staffID")).thenReturn("1");
         when(request.getParameter("fullName")).thenReturn("Nguyen Van B");
@@ -90,25 +83,14 @@ public class StaffCrudServletTest {
         when(request.getParameter("roleID")).thenReturn("1");
         when(request.getParameter("isActive")).thenReturn("true");
 
-        when(staffDAO.isEmailExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isFullNameExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isPhoneNumberExists(anyString(), anyInt()))
-                .thenReturn(false);
-
         servlet.doPost(request, response);
 
-        verify(staffDAO).updateStaff(any(Staff.class));
-
+        verify(staffService).updateStaff(any(Staff.class));
         verify(response).sendRedirect("staff-list");
     }
 
     @Test
     void testCreateStaff_EmailAlreadyExists() throws Exception {
-
         when(request.getParameter("action")).thenReturn("create");
         when(request.getParameter("staffID")).thenReturn("");
         when(request.getParameter("fullName")).thenReturn("Nguyen Van A");
@@ -119,8 +101,8 @@ public class StaffCrudServletTest {
         when(request.getParameter("roleID")).thenReturn("1");
         when(request.getParameter("isActive")).thenReturn("true");
 
-        when(staffDAO.isEmailExists(anyString(), anyInt()))
-                .thenReturn(true);
+        doThrow(new IllegalArgumentException("Email already exists. Please choose another one."))
+                .when(staffService).createStaff(any(Staff.class));
 
         when(roleDAO.getAllRoles()).thenReturn(new ArrayList<>());
         when(request.getRequestDispatcher("staff-form.jsp"))
@@ -131,15 +113,11 @@ public class StaffCrudServletTest {
         verify(request).setAttribute(
                 eq("errorMessage"),
                 contains("Email already exists"));
-
         verify(dispatcher).forward(request, response);
-
-        verify(staffDAO, never()).createStaff(any());
     }
 
     @Test
     void testCreateStaff_FullNameAlreadyExists() throws Exception {
-
         when(request.getParameter("action")).thenReturn("create");
         when(request.getParameter("staffID")).thenReturn("");
         when(request.getParameter("fullName")).thenReturn("Nguyen Van A");
@@ -150,11 +128,8 @@ public class StaffCrudServletTest {
         when(request.getParameter("roleID")).thenReturn("1");
         when(request.getParameter("isActive")).thenReturn("true");
 
-        when(staffDAO.isEmailExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isFullNameExists(anyString(), anyInt()))
-                .thenReturn(true);
+        doThrow(new IllegalArgumentException("Full name already exists. Please choose another one."))
+                .when(staffService).createStaff(any(Staff.class));
 
         when(roleDAO.getAllRoles()).thenReturn(new ArrayList<>());
         when(request.getRequestDispatcher("staff-form.jsp"))
@@ -165,15 +140,11 @@ public class StaffCrudServletTest {
         verify(request).setAttribute(
                 eq("errorMessage"),
                 contains("Full name already exists"));
-
         verify(dispatcher).forward(request, response);
-
-        verify(staffDAO, never()).createStaff(any());
     }
 
     @Test
     void testCreateStaff_PhoneNumberAlreadyExists() throws Exception {
-
         when(request.getParameter("action")).thenReturn("create");
         when(request.getParameter("staffID")).thenReturn("");
         when(request.getParameter("fullName")).thenReturn("Nguyen Van A");
@@ -184,14 +155,8 @@ public class StaffCrudServletTest {
         when(request.getParameter("roleID")).thenReturn("1");
         when(request.getParameter("isActive")).thenReturn("true");
 
-        when(staffDAO.isEmailExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isFullNameExists(anyString(), anyInt()))
-                .thenReturn(false);
-
-        when(staffDAO.isPhoneNumberExists(anyString(), anyInt()))
-                .thenReturn(true);
+        doThrow(new IllegalArgumentException("Phone number already exists. Please choose another one."))
+                .when(staffService).createStaff(any(Staff.class));
 
         when(roleDAO.getAllRoles()).thenReturn(new ArrayList<>());
         when(request.getRequestDispatcher("staff-form.jsp"))
@@ -202,22 +167,17 @@ public class StaffCrudServletTest {
         verify(request).setAttribute(
                 eq("errorMessage"),
                 contains("Phone number already exists"));
-
         verify(dispatcher).forward(request, response);
-
-        verify(staffDAO, never()).createStaff(any());
     }
 
     @Test
     void testDeleteStaffSuccess() throws Exception {
-
         when(request.getParameter("action")).thenReturn("delete");
         when(request.getParameter("id")).thenReturn("1");
 
         servlet.doGet(request, response);
 
         verify(staffDAO).deleteStaff(1);
-
         verify(response).sendRedirect("staff-list");
     }
 }

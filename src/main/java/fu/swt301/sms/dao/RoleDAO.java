@@ -29,4 +29,23 @@ public class RoleDAO {
         }
         return roleList;
     }
+
+    public Role getRoleById(int roleId) {
+        String sql = "SELECT * FROM Role WHERE Role_ID = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Role role = new Role();
+                    role.setRoleID(rs.getInt("Role_ID"));
+                    role.setRoleName(rs.getString("Role_Name"));
+                    return role;
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -128,6 +128,12 @@ public class DataInitializer implements ServletContextListener {
                                "IsActive BIT NOT NULL, " +
                                "FailedAttempts INT DEFAULT 0, " +
                                "LockoutTime DATETIME NULL, " +
+                               "StaffCode VARCHAR(20), " +
+                               "DateOfBirth DATE, " +
+                               "Department NVARCHAR(100), " +
+                               "Position NVARCHAR(100), " +
+                               "Salary INT, " +
+                               "HireDate DATE, " +
                                "CONSTRAINT FK_Staff_Role FOREIGN KEY (Role_ID) REFERENCES Role(Role_ID)" +
                                ")";
             try (PreparedStatement ps = conn.prepareStatement(createSQL)) {

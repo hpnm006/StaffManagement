@@ -1,6 +1,7 @@
 package fu.swt301.sms.servlet;
 
-import fu.swt301.sms.dao.StaffDAO;
+import fu.swt301.sms.service.AuthService;
+import fu.swt301.sms.service.AuthException;
 import fu.swt301.sms.entity.Staff;
 
 import jakarta.servlet.RequestDispatcher;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class LoginServletTest {
 
     @Mock
-    private StaffDAO staffDAO;
+    private AuthService authService;
 
     @Mock
     private HttpServletRequest request;
@@ -43,12 +44,11 @@ public class LoginServletTest {
 
     @BeforeEach
     void setUp() {
-        servlet.setStaffDAO(staffDAO);
+        servlet.setAuthService(authService);
     }
 
     @Test
     void testLoginSuccess() throws Exception {
-
         Staff staff = new Staff();
 
         when(request.getParameter("email"))
@@ -57,7 +57,7 @@ public class LoginServletTest {
         when(request.getParameter("password"))
                 .thenReturn("admin123");
 
-        when(staffDAO.checkLogin("admin@example.com", "admin123"))
+        when(authService.login("admin@example.com", "admin123"))
                 .thenReturn(staff);
 
         when(request.getSession())
@@ -66,21 +66,19 @@ public class LoginServletTest {
         servlet.doPost(request, response);
 
         verify(session).setAttribute("user", staff);
-
         verify(response).sendRedirect("staff-list");
     }
 
     @Test
     void testLoginFail() throws Exception {
-
         when(request.getParameter("email"))
                 .thenReturn("abc@gmail.com");
 
         when(request.getParameter("password"))
                 .thenReturn("123");
 
-        when(staffDAO.checkLogin(anyString(), anyString()))
-                .thenReturn(null);
+        when(authService.login(anyString(), anyString()))
+                .thenThrow(new AuthException("Invalid email or password"));
 
         when(request.getRequestDispatcher("login.jsp"))
                 .thenReturn(dispatcher);

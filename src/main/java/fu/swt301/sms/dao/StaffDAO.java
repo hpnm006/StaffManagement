@@ -46,6 +46,19 @@ public class StaffDAO {
         role.setRoleName(rs.getString("Role_Name"));
         staff.setRole(role);
 
+        java.sql.Date dob = rs.getDate("DateOfBirth");
+        if (dob != null) {
+            staff.setDateOfBirth(dob.toLocalDate());
+        }
+        java.sql.Date hire = rs.getDate("HireDate");
+        if (hire != null) {
+            staff.setHireDate(hire.toLocalDate());
+        }
+        staff.setStaffCode(rs.getString("StaffCode"));
+        staff.setDepartment(rs.getString("Department"));
+        staff.setPosition(rs.getString("Position"));
+        staff.setSalary(rs.getInt("Salary"));
+
         return staff;
     }
 
@@ -202,7 +215,7 @@ public class StaffDAO {
      * @param staff The Staff object containing the data to be inserted.
      */
     public void createStaff(Staff staff) {
-        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)";
+        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime, StaffCode, DateOfBirth, Department, Position, Salary, HireDate) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, staff.getFullName());
@@ -212,6 +225,12 @@ public class StaffDAO {
             ps.setString(5, staff.getPassword());
             ps.setInt(6, staff.getRole().getRoleID());
             ps.setBoolean(7, staff.isIsActive());
+            ps.setString(8, staff.getStaffCode());
+            ps.setDate(9, staff.getDateOfBirth() != null ? java.sql.Date.valueOf(staff.getDateOfBirth()) : null);
+            ps.setString(10, staff.getDepartment());
+            ps.setString(11, staff.getPosition());
+            ps.setInt(12, staff.getSalary());
+            ps.setDate(13, staff.getHireDate() != null ? java.sql.Date.valueOf(staff.getHireDate()) : null);
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
             LOGGER.log(Level.SEVERE, "Error creating staff", e);
@@ -224,7 +243,7 @@ public class StaffDAO {
      * @param staff The Staff object containing the updated data. The StaffID must be set.
      */
     public void updateStaff(Staff staff) {
-        String sql = "UPDATE Staff SET FullName = ?, Gender = ?, PhoneNumber = ?, Email = ?, Role_ID = ?, IsActive = ? WHERE StaffID = ?";
+        String sql = "UPDATE Staff SET FullName = ?, Gender = ?, PhoneNumber = ?, Email = ?, Role_ID = ?, IsActive = ?, StaffCode = ?, DateOfBirth = ?, Department = ?, Position = ?, Salary = ?, HireDate = ? WHERE StaffID = ?";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, staff.getFullName());
@@ -233,7 +252,13 @@ public class StaffDAO {
             ps.setString(4, staff.getEmail());
             ps.setInt(5, staff.getRole().getRoleID());
             ps.setBoolean(6, staff.isIsActive());
-            ps.setInt(7, staff.getStaffID());
+            ps.setString(7, staff.getStaffCode());
+            ps.setDate(8, staff.getDateOfBirth() != null ? java.sql.Date.valueOf(staff.getDateOfBirth()) : null);
+            ps.setString(9, staff.getDepartment());
+            ps.setString(10, staff.getPosition());
+            ps.setInt(11, staff.getSalary());
+            ps.setDate(12, staff.getHireDate() != null ? java.sql.Date.valueOf(staff.getHireDate()) : null);
+            ps.setInt(13, staff.getStaffID());
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
             LOGGER.log(Level.SEVERE, "Error updating staff", e);
@@ -274,5 +299,128 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public Staff getStaffByStaffCode(String staffCode) {
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.StaffCode = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, staffCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return extractStaffFromResultSet(rs);
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<Staff> getAllStaff() {
+        List<Staff> list = new ArrayList<>();
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(extractStaffFromResultSet(rs));
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Staff> getStaffByDepartment(String department) {
+        List<Staff> list = new ArrayList<>();
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Department = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, department);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(extractStaffFromResultSet(rs));
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Staff> getStaffByRole(int roleId) {
+        List<Staff> list = new ArrayList<>();
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Role_ID = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(extractStaffFromResultSet(rs));
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Staff> searchStaffByName(String name) {
+        List<Staff> list = new ArrayList<>();
+        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE LOWER(s.FullName) LIKE ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "%" + (name != null ? name.toLowerCase() : "") + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(extractStaffFromResultSet(rs));
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Staff> searchStaffAdvanced(String name, String department, String position, Boolean isActive) {
+        List<Staff> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE 1=1");
+        if (name != null && !name.isEmpty()) {
+            sql.append(" AND LOWER(s.FullName) LIKE ?");
+        }
+        if (department != null && !department.isEmpty()) {
+            sql.append(" AND s.Department = ?");
+        }
+        if (position != null && !position.isEmpty()) {
+            sql.append(" AND s.Position = ?");
+        }
+        if (isActive != null) {
+            sql.append(" AND s.IsActive = ?");
+        }
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            if (name != null && !name.isEmpty()) {
+                ps.setString(idx++, "%" + name.toLowerCase() + "%");
+            }
+            if (department != null && !department.isEmpty()) {
+                ps.setString(idx++, department);
+            }
+            if (position != null && !position.isEmpty()) {
+                ps.setString(idx++, position);
+            }
+            if (isActive != null) {
+                ps.setBoolean(idx, isActive);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(extractStaffFromResultSet(rs));
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

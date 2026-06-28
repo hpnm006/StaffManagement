@@ -11,6 +11,12 @@ public class Staff {
     private boolean isActive;
     private int failedAttempts;
     private java.sql.Timestamp lockoutTime;
+    private String staffCode;
+    private java.time.LocalDate dateOfBirth;
+    private String department;
+    private String position;
+    private int salary;
+    private java.time.LocalDate hireDate;
 
     public int getStaffID() {
         return staffID;
@@ -90,5 +96,53 @@ public class Staff {
 
     public void setLockoutTime(java.sql.Timestamp lockoutTime) {
         this.lockoutTime = lockoutTime;
+    }
+
+    public String getStaffCode() {
+        return staffCode;
+    }
+
+    public void setStaffCode(String staffCode) {
+        this.staffCode = staffCode;
+    }
+
+    public java.time.LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(java.time.LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public int getSalary() {
+        return salary;
+    }
+
+    public void setSalary(int salary) {
+        this.salary = salary;
+    }
+
+    public java.time.LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public void setHireDate(java.time.LocalDate hireDate) {
+        this.hireDate = hireDate;
     }
 }

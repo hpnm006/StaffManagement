@@ -4,20 +4,22 @@ import fu.swt301.sms.entity.Role;
 import fu.swt301.sms.entity.Staff;
 import java.time.LocalDate;
 import java.util.List;
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class StaffDAOTest {
 
     private StaffDAO staffDAO;
     private RoleDAO roleDAO;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         System.out.println("H2 Test DB initialized (schema.sql + data.sql)");
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         staffDAO = new StaffDAO();
         roleDAO = new RoleDAO();

@@ -1,7 +1,5 @@
 package fu.swt301.sms.entity;
 
-import java.time.LocalDate;
-
 public class Staff {
     private int staffID;
     private String fullName;
@@ -9,16 +7,8 @@ public class Staff {
     private String phoneNumber;
     private String email;
     private String password;
-    private Role role;
+    private Role role; // Changed from String to Role
     private boolean isActive;
-
-    // NEW FIELDS
-    private String staffCode;        // Mã nhân viên
-    private LocalDate dateOfBirth;   // Ngày sinh
-    private String department;       // Phòng ban
-    private String position;         // Chức vụ
-    private double salary;           // Lương
-    private LocalDate hireDate;      // Ngày vào làm
 
     public int getStaffID() {
         return staffID;
@@ -82,55 +72,5 @@ public class Staff {
 
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
-    }
-
-    // NEW GETTER/SETTER
-
-    public String getStaffCode() {
-        return staffCode;
-    }
-
-    public void setStaffCode(String staffCode) {
-        this.staffCode = staffCode;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public double getSalary() {
-        return salary;
-    }
-
-    public void setSalary(double salary) {
-        this.salary = salary;
-    }
-
-    public LocalDate getHireDate() {
-        return hireDate;
-    }
-
-    public void setHireDate(LocalDate hireDate) {
-        this.hireDate = hireDate;
     }
 }

@@ -13,23 +13,47 @@ import java.io.IOException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
+
+    // Tạo DAO dưới dạng thuộc tính để Mockito có thể mock
+    private StaffDAO staffDAO = new StaffDAO();
+
+    // Setter dùng cho Unit Test
+    public void setStaffDAO(StaffDAO staffDAO) {
+        this.staffDAO = staffDAO;
+    }
+
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        StaffDAO staffDAO = new StaffDAO();
+
         Staff staff = staffDAO.checkLogin(email, password);
+
         if (staff != null) {
+
             HttpSession session = request.getSession();
             session.setAttribute("user", staff);
+
             response.sendRedirect("staff-list");
+
         } else {
+
             request.setAttribute("error", "Invalid email or password");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+
+            request.getRequestDispatcher("login.jsp")
+                    .forward(request, response);
         }
     }
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.getRequestDispatcher("login.jsp").forward(request, response);
+    protected void doGet(HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
+        request.getRequestDispatcher("login.jsp")
+                .forward(request, response);
     }
 }

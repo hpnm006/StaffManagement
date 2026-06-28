@@ -15,15 +15,32 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * This servlet acts as a controller for all CRUD (Create, Read, Update, Delete) operations related to Staff.
- * It handles both the display of forms (for creating/editing) and the processing of submitted form data.
+ * This servlet acts as a controller for all CRUD (Create, Read, Update, Delete)
+ * operations related to Staff. It handles both the display of forms (for
+ * creating/editing) and the processing of submitted form data.
  */
 @WebServlet("/staff-crud")
 public class StaffCrudServlet extends HttpServlet {
+    // DAO instances used by the servlet.
+// They are declared as fields so they can be replaced with mock objects during unit testing.
+
+    private StaffDAO staffDAO = new StaffDAO();
+    private RoleDAO roleDAO = new RoleDAO();
+
+// Setter methods for dependency injection in unit tests.
+    public void setStaffDAO(StaffDAO staffDAO) {
+        this.staffDAO = staffDAO;
+    }
+
+    public void setRoleDAO(RoleDAO roleDAO) {
+        this.roleDAO = roleDAO;
+    }
 
     /**
-     * Handles POST requests, which are used to submit data for creating or updating a staff member.
-     * This method contains the core logic for data validation and persistence.
+     * Handles POST requests, which are used to submit data for creating or
+     * updating a staff member. This method contains the core logic for data
+     * validation and persistence.
+     *
      * @param request The HttpServletRequest object containing the form data.
      * @param response The HttpServletResponse object for sending the response.
      * @throws ServletException If a servlet-specific error occurs.
@@ -32,8 +49,6 @@ public class StaffCrudServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-        StaffDAO staffDAO = new StaffDAO();
-        RoleDAO roleDAO = new RoleDAO();
 
         // --- Step 1: Populate a Staff object from the request parameters ---
         // Input strings are trimmed to remove leading/trailing whitespace for data consistency.
@@ -101,7 +116,9 @@ public class StaffCrudServlet extends HttpServlet {
     }
 
     /**
-     * Handles GET requests, which are used to display pages or perform simple actions like deletion.
+     * Handles GET requests, which are used to display pages or perform simple
+     * actions like deletion.
+     *
      * @param request The HttpServletRequest object.
      * @param response The HttpServletResponse object.
      * @throws ServletException If a servlet-specific error occurs.
@@ -110,8 +127,6 @@ public class StaffCrudServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-        StaffDAO staffDAO = new StaffDAO();
-        RoleDAO roleDAO = new RoleDAO();
 
         if ("delete".equals(action)) {
             // Handle deletion action.

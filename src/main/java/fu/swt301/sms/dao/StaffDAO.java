@@ -4,7 +4,6 @@ import fu.swt301.sms.entity.Role;
 import fu.swt301.sms.entity.Staff;
 import fu.swt301.sms.utils.DBUtils;
 
-import java.sql.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,18 +34,6 @@ public class StaffDAO {
         staff.setPhoneNumber(rs.getString("PhoneNumber"));
         staff.setEmail(rs.getString("Email"));
         staff.setIsActive(rs.getBoolean("IsActive"));
-        
-        // NEW FIELDS
-        staff.setStaffCode(rs.getString("StaffCode"));
-        Date dob = rs.getDate("DateOfBirth");
-        if (dob != null) staff.setDateOfBirth(dob.toLocalDate());
-
-        staff.setDepartment(rs.getString("Department"));
-        staff.setPosition(rs.getString("Position"));
-        staff.setSalary(rs.getDouble("Salary"));
-
-        Date hire = rs.getDate("HireDate");
-        if (hire != null) staff.setHireDate(hire.toLocalDate());
 
         Role role = new Role();
         role.setRoleID(rs.getInt("Role_ID"));
@@ -180,7 +167,7 @@ public class StaffDAO {
      * @param staff The Staff object containing the data to be inserted.
      */
     public void createStaff(Staff staff) {
-        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, StaffCode, DateOfBirth, Department, Position, Salary, HireDate)) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, staff.getFullName());
@@ -190,14 +177,6 @@ public class StaffDAO {
             ps.setString(5, staff.getPassword());
             ps.setInt(6, staff.getRole().getRoleID());
             ps.setBoolean(7, staff.isIsActive());
-            
-            ps.setString(8, staff.getStaffCode());
-            ps.setDate(9, staff.getDateOfBirth() == null ? null : Date.valueOf(staff.getDateOfBirth()));
-            ps.setString(10, staff.getDepartment());
-            ps.setString(11, staff.getPosition());
-            ps.setDouble(12, staff.getSalary());
-            ps.setDate(13, staff.getHireDate() == null ? null : Date.valueOf(staff.getHireDate()));
-            
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
@@ -210,7 +189,7 @@ public class StaffDAO {
      * @param staff The Staff object containing the updated data. The StaffID must be set.
      */
     public void updateStaff(Staff staff) {
-        String sql = "UPDATE Staff SET FullName = ?, Gender = ?, PhoneNumber = ?, Email = ?, Role_ID = ?, IsActive = ?, StaffCode=?, DateOfBirth=?, Department=?, Position=?, Salary=?, HireDate=? WHERE StaffID = ?";
+        String sql = "UPDATE Staff SET FullName = ?, Gender = ?, PhoneNumber = ?, Email = ?, Role_ID = ?, IsActive = ? WHERE StaffID = ?";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, staff.getFullName());
@@ -219,14 +198,6 @@ public class StaffDAO {
             ps.setString(4, staff.getEmail());
             ps.setInt(5, staff.getRole().getRoleID());
             ps.setBoolean(6, staff.isIsActive());
-            
-            ps.setString(7, staff.getStaffCode());
-            ps.setDate(8, staff.getDateOfBirth() == null ? null : Date.valueOf(staff.getDateOfBirth()));
-            ps.setString(9, staff.getDepartment());
-            ps.setString(10, staff.getPosition());
-            ps.setDouble(11, staff.getSalary());
-            ps.setDate(12, staff.getHireDate() == null ? null : Date.valueOf(staff.getHireDate()));
-            
             ps.setInt(7, staff.getStaffID());
             ps.executeUpdate();
         } catch (ClassNotFoundException | SQLException e) {
@@ -268,117 +239,5 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return null;
-    }
-    public Staff getStaffByEmail(String email) {
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Email = ?";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return extractStaffFromResultSet(rs);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    public Staff getStaffByStaffCode(String staffCode) {
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.StaffCode = ?";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, staffCode);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return extractStaffFromResultSet(rs);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    public List<Staff> getAllStaff() {
-        List<Staff> list = new ArrayList<>();
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) list.add(extractStaffFromResultSet(rs));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-    public List<Staff> getStaffByDepartment(String department) {
-        List<Staff> list = new ArrayList<>();
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Department = ?";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, department);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(extractStaffFromResultSet(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-    public List<Staff> getStaffByRole(int roleId) {
-        List<Staff> list = new ArrayList<>();
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Role_ID = ?";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, roleId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(extractStaffFromResultSet(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-    public List<Staff> searchStaffByName(String name) {
-        List<Staff> list = new ArrayList<>();
-        String sql = "SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.FullName LIKE ?";
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, "%" + name + "%");
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(extractStaffFromResultSet(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-    public List<Staff> searchStaffAdvanced(String name, String department, String position, Boolean active) {
-        List<Staff> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE 1=1");
-
-        if (name != null && !name.isEmpty()) sql.append(" AND s.FullName LIKE ?");
-        if (department != null && !department.isEmpty()) sql.append(" AND s.Department = ?");
-        if (position != null && !position.isEmpty()) sql.append(" AND s.Position = ?");
-        if (active != null) sql.append(" AND s.IsActive = ?");
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            int idx = 1;
-            if (name != null && !name.isEmpty()) ps.setString(idx++, "%" + name + "%");
-            if (department != null && !department.isEmpty()) ps.setString(idx++, department);
-            if (position != null && !position.isEmpty()) ps.setString(idx++, position);
-            if (active != null) ps.setBoolean(idx, active);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(extractStaffFromResultSet(rs));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
     }
 }

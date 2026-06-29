@@ -78,9 +78,6 @@ public class StaffCrudServlet extends HttpServlet {
         // --- Step 2: Perform server-side validation and persistence via service ---
         String errorMessage = null;
         try {
-            if (role.getRoleID() == 1) {
-                throw new IllegalArgumentException("Cannot assign Admin role to a staff member.");
-            }
             if ("create".equals(action)) {
                 staffService.createStaff(staff);
             } else if ("update".equals(action)) {
@@ -140,10 +137,8 @@ public class StaffCrudServlet extends HttpServlet {
             staffDAO.deleteStaff(staffId);
             response.sendRedirect("staff-list");
         } else {
-            // Handles both "create" and "edit" actions, as both need to display the form.
             // First, always fetch the list of roles for the dropdown.
             List<Role> roleList = roleDAO.getAllRoles();
-            roleList.removeIf(r -> r.getRoleID() == 1); // Do not allow choosing Admin role
             request.setAttribute("roleList", roleList);
 
             if ("edit".equals(action)) {

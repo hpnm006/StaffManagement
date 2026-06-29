@@ -16,7 +16,7 @@
         </div>
     </c:if>
 
-    <form action="staff-crud" method="post">
+    <form action="staff-crud" method="post" autocomplete="off">
         <input type="hidden" name="action" value="${empty staff ? 'create' : 'update'}">
         <c:if test="${not empty staff}">
             <input type="hidden" name="staffID" value="${staff.staffID}">
@@ -46,12 +46,12 @@
         </div>
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="${staff.email}" required maxlength="100">
+            <input type="email" class="form-control" id="email" name="email" value="${staff.email}" autocomplete="off" required maxlength="100">
         </div>
         <c:if test="${empty staff || staff.staffID == 0}">
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required maxlength="50">
+                <input type="password" class="form-control" id="password" name="password" value="${param.password}" autocomplete="new-password" required maxlength="50">
             </div>
         </c:if>
         <div class="form-group">

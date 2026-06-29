@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.mindrot.jbcrypt.BCrypt;
 
 /**
  * This listener class is automatically instantiated and invoked by the web container when the application starts up.
@@ -38,24 +37,6 @@ public class DataInitializer implements ServletContextListener {
             createRoleTableIfNotExists(conn);
             createStaffTableIfNotExists(conn);
             upgradeStaffTableIfNecessary(conn);
-
-            // Step 2: Check if the 'Role' table is empty. If it is, we assume the database is new and needs seeding.
-            boolean dataExists = false;
-            try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Role");
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
-                    dataExists = true;
-                }
-            }
-
-            // Step 3: If no data exists, insert the default roles and a default admin user.
-            if (!dataExists) {
-                LOGGER.info("No data found. Initializing default data...");
-                insertDefaultData(conn);
-            } else {
-                LOGGER.info("Data already exists. Skipping initialization.");
-            }
-
         } catch (SQLException | ClassNotFoundException e) {
             // If any database error occurs during initialization, log it and throw a RuntimeException
             // to halt the application's startup, as it cannot function without a proper database setup.
@@ -144,41 +125,7 @@ public class DataInitializer implements ServletContextListener {
         }
     }
 
-    /**
-     * Inserts a predefined set of data into the 'Role' and 'Staff' tables.
-     * This includes 'Admin' and 'Staff' roles, and a default administrator account.
-     * @param conn The active database connection.
-     * @throws SQLException if a database access error occurs.
-     */
-    private void insertDefaultData(Connection conn) throws SQLException {
-        // Insert default roles using a batch operation for efficiency.
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Role (Role_ID, Role_Name) VALUES (?, ?)")) {
-            ps.setInt(1, 1);
-            ps.setString(2, "Admin");
-            ps.addBatch();
 
-            ps.setInt(1, 2);
-            ps.setString(2, "Staff");
-            ps.addBatch();
-
-            ps.executeBatch();
-            LOGGER.info("Default roles inserted.");
-        }
-
-        // Insert a default administrator user for initial login.
-        // IMPORTANT: The password here is hashed using BCrypt.
-        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO Staff (FullName, Gender, PhoneNumber, Email, Password, Role_ID, IsActive, FailedAttempts, LockoutTime) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL)")) {
-            ps.setString(1, "Admin User");
-            ps.setBoolean(2, true); // true for Male
-            ps.setString(3, "0123456789");
-            ps.setString(4, "admin@example.com");
-            ps.setString(5, BCrypt.hashpw("admin123", BCrypt.gensalt())); // Hashed password
-            ps.setInt(6, 1); // Role_ID for Admin
-            ps.setBoolean(7, true); // IsActive
-            ps.executeUpdate();
-            LOGGER.info("Default admin user inserted.");
-        }
-    }
 
     /**
      * Checks if the 'Staff' table is missing any newer columns, and adds them if necessary.

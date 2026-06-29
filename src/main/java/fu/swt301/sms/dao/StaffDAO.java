@@ -442,7 +442,7 @@ public class StaffDAO {
     }
 
     public int getStaffCountByFilter(String name, String status) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Staff s WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Staff s WHERE s.Role_ID != 1");
         if (name != null && !name.isEmpty()) {
             sql.append(" AND s.FullName LIKE ?");
         }
@@ -471,7 +471,7 @@ public class StaffDAO {
 
     public List<Staff> getStaffByFilterPaginated(String name, String status, int offset, int limit) {
         List<Staff> staffList = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT s.*, r.Role_Name FROM Staff s JOIN Role r ON s.Role_ID = r.Role_ID WHERE s.Role_ID != 1");
         if (name != null && !name.isEmpty()) {
             sql.append(" AND s.FullName LIKE ?");
         }

@@ -63,7 +63,7 @@ public class StaffCrudServletTest {
         when(request.getParameter("phoneNumber")).thenReturn("0123456789");
         when(request.getParameter("email")).thenReturn("a@gmail.com");
         when(request.getParameter("password")).thenReturn("123");
-        when(request.getParameter("roleID")).thenReturn("1");
+        when(request.getParameter("roleID")).thenReturn("2");
         when(request.getParameter("isActive")).thenReturn("true");
 
         servlet.doPost(request, response);
@@ -80,8 +80,14 @@ public class StaffCrudServletTest {
         when(request.getParameter("gender")).thenReturn("true");
         when(request.getParameter("phoneNumber")).thenReturn("0987654321");
         when(request.getParameter("email")).thenReturn("b@gmail.com");
-        when(request.getParameter("roleID")).thenReturn("1");
+        when(request.getParameter("roleID")).thenReturn("2");
         when(request.getParameter("isActive")).thenReturn("true");
+
+        Staff existing = new Staff();
+        Role r = new Role();
+        r.setRoleID(2);
+        existing.setRole(r);
+        when(staffDAO.getStaffById(1)).thenReturn(existing);
 
         servlet.doPost(request, response);
 
@@ -98,7 +104,7 @@ public class StaffCrudServletTest {
         when(request.getParameter("phoneNumber")).thenReturn("0123456789");
         when(request.getParameter("email")).thenReturn("admin@example.com");
         when(request.getParameter("password")).thenReturn("123");
-        when(request.getParameter("roleID")).thenReturn("1");
+        when(request.getParameter("roleID")).thenReturn("2");
         when(request.getParameter("isActive")).thenReturn("true");
 
         doThrow(new IllegalArgumentException("Email already exists. Please choose another one."))
@@ -125,7 +131,7 @@ public class StaffCrudServletTest {
         when(request.getParameter("phoneNumber")).thenReturn("0123456789");
         when(request.getParameter("email")).thenReturn("abc@gmail.com");
         when(request.getParameter("password")).thenReturn("123");
-        when(request.getParameter("roleID")).thenReturn("1");
+        when(request.getParameter("roleID")).thenReturn("2");
         when(request.getParameter("isActive")).thenReturn("true");
 
         doThrow(new IllegalArgumentException("Full name already exists. Please choose another one."))
@@ -152,7 +158,7 @@ public class StaffCrudServletTest {
         when(request.getParameter("phoneNumber")).thenReturn("0123456789");
         when(request.getParameter("email")).thenReturn("abc@gmail.com");
         when(request.getParameter("password")).thenReturn("123");
-        when(request.getParameter("roleID")).thenReturn("1");
+        when(request.getParameter("roleID")).thenReturn("2");
         when(request.getParameter("isActive")).thenReturn("true");
 
         doThrow(new IllegalArgumentException("Phone number already exists. Please choose another one."))
@@ -174,6 +180,12 @@ public class StaffCrudServletTest {
     void testDeleteStaffSuccess() throws Exception {
         when(request.getParameter("action")).thenReturn("delete");
         when(request.getParameter("id")).thenReturn("1");
+
+        Staff s = new Staff();
+        Role r = new Role();
+        r.setRoleID(2);
+        s.setRole(r);
+        when(staffDAO.getStaffById(1)).thenReturn(s);
 
         servlet.doGet(request, response);
 

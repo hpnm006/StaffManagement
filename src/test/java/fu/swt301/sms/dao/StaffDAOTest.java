@@ -38,7 +38,7 @@ public class StaffDAOTest {
         s.setPhoneNumber("0123456789");
         s.setEmail("a@example.com");
         s.setPassword("123456");
-        s.setRole(roleDAO.getRoleById(1)); // MANAGER
+        s.setRole(roleDAO.getRoleById(2)); // STAFF
         s.setIsActive(true);
         s.setStaffCode("STF001");
         s.setDateOfBirth(LocalDate.of(1999, 1, 1));
@@ -125,7 +125,7 @@ public class StaffDAOTest {
         Staff s = sample();
         staffDAO.createStaff(s);
 
-        assertFalse(staffDAO.getStaffByRole(1).isEmpty());
+        assertFalse(staffDAO.getStaffByRole(2).isEmpty());
     }
 
     @Test

@@ -37,6 +37,7 @@ public class DataInitializer implements ServletContextListener {
             LOGGER.info("Checking database schema...");
             createRoleTableIfNotExists(conn);
             createStaffTableIfNotExists(conn);
+            upgradeStaffTableIfNecessary(conn);
 
             // Step 2: Check if the 'Role' table is empty. If it is, we assume the database is new and needs seeding.
             boolean dataExists = false;
@@ -177,6 +178,65 @@ public class DataInitializer implements ServletContextListener {
             ps.executeUpdate();
             LOGGER.info("Default admin user inserted.");
         }
+    }
+
+    /**
+     * Checks if the 'Staff' table is missing any newer columns, and adds them if necessary.
+     * This ensures schema evolution compatibility for older databases.
+     * @param conn The active database connection.
+     * @throws SQLException if a database access error occurs.
+     */
+    private void upgradeStaffTableIfNecessary(Connection conn) throws SQLException {
+        String[][] columns = {
+            {"FailedAttempts", "INT DEFAULT 0"},
+            {"LockoutTime", "DATETIME NULL"},
+            {"StaffCode", "VARCHAR(20) NULL"},
+            {"DateOfBirth", "DATE NULL"},
+            {"Department", "NVARCHAR(100) NULL"},
+            {"Position", "NVARCHAR(100) NULL"},
+            {"Salary", "INT NULL"},
+            {"HireDate", "DATE NULL"}
+        };
+
+        for (String[] col : columns) {
+            String colName = col[0];
+            String colType = col[1];
+            if (!columnExists(conn, "Staff", colName)) {
+                LOGGER.info("Upgrading 'Staff' table: adding missing column '" + colName + "'...");
+                String alterSQL = "ALTER TABLE Staff ADD " + colName + " " + colType;
+                try (PreparedStatement ps = conn.prepareStatement(alterSQL)) {
+                    ps.execute();
+                }
+                if ("FailedAttempts".equals(colName)) {
+                    // Update existing records to 0
+                    try (PreparedStatement ps = conn.prepareStatement("UPDATE Staff SET FailedAttempts = 0 WHERE FailedAttempts IS NULL")) {
+                        ps.execute();
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        // Try exact match first
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, columnName)) {
+            if (rs.next()) {
+                return true;
+            }
+        }
+        // Try uppercase for H2 / databases with uppercase naming
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName.toUpperCase(), columnName.toUpperCase())) {
+            if (rs.next()) {
+                return true;
+            }
+        }
+        // Try lowercase
+        try (ResultSet rs = conn.getMetaData().getColumns(null, null, tableName.toLowerCase(), columnName.toLowerCase())) {
+            if (rs.next()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

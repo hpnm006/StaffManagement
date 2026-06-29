@@ -1,24 +1,24 @@
-CREATE TABLE Role (
+CREATE TABLE IF NOT EXISTS Role (
     Role_ID INT PRIMARY KEY,
-    Role_Name VARCHAR(50)
+    Role_Name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE Staff (
+CREATE TABLE IF NOT EXISTS Staff (
     StaffID INT AUTO_INCREMENT PRIMARY KEY,
-    FullName VARCHAR(100),
-    Gender BIT,
+    FullName VARCHAR(100) NOT NULL,
+    Gender BIT NOT NULL,
     PhoneNumber VARCHAR(20),
-    Email VARCHAR(100),
-    Password VARCHAR(100),
-    Role_ID INT,
-    IsActive BIT,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    Role_ID INT NOT NULL,
+    IsActive BIT NOT NULL,
     FailedAttempts INT DEFAULT 0,
     LockoutTime TIMESTAMP NULL,
     StaffCode VARCHAR(20),
     DateOfBirth DATE,
     Department VARCHAR(100),
     Position VARCHAR(100),
-    Salary DOUBLE,
+    Salary INT,
     HireDate DATE,
     FOREIGN KEY (Role_ID) REFERENCES Role(Role_ID)
 );

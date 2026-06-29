@@ -37,6 +37,7 @@ public class StaffDAO {
         staff.setGender(rs.getBoolean("Gender"));
         staff.setPhoneNumber(rs.getString("PhoneNumber"));
         staff.setEmail(rs.getString("Email"));
+        staff.setPassword(rs.getString("Password"));
         staff.setIsActive(rs.getBoolean("IsActive"));
         staff.setFailedAttempts(rs.getInt("FailedAttempts"));
         staff.setLockoutTime(rs.getTimestamp("LockoutTime"));
@@ -498,5 +499,17 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return staffList;
+    }
+
+    public void updatePassword(int staffId, String newHashedPassword) {
+        String sql = "UPDATE Staff SET Password = ? WHERE StaffID = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newHashedPassword);
+            ps.setInt(2, staffId);
+            ps.executeUpdate();
+        } catch (ClassNotFoundException | SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating staff password", e);
+        }
     }
 }

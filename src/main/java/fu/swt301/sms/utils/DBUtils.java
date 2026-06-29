@@ -11,7 +11,7 @@ public class DBUtils {
     public static Connection getConnection() throws ClassNotFoundException, SQLException {
         if ("true".equals(System.getProperty("useH2"))) {
             Class.forName("org.h2.Driver");
-            Connection conn = DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "");
+            Connection conn = DriverManager.getConnection("jdbc:h2:mem:StaffManagementDB;DB_CLOSE_DELAY=-1", "sa", "123");
             initializeH2(conn);
             return conn;
         }
@@ -19,12 +19,12 @@ public class DBUtils {
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
         String url =
-                "jdbc:sqlserver://localhost\\SQLEXPRESS;"
-                + "databaseName=TestDB;"
+                "jdbc:sqlserver://localhost:1433;"
+                + "databaseName=StaffManagementDB;"
                 + "encrypt=false;"
                 + "trustServerCertificate=true;";
 
-        return DriverManager.getConnection(url, "sa", "sa");
+        return DriverManager.getConnection(url, "sa", "123");
     }
 
     private static synchronized void initializeH2(Connection conn) throws SQLException {

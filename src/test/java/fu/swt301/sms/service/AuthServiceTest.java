@@ -125,4 +125,16 @@ public class AuthServiceTest {
         assertNotNull(result);
         verify(staffDAO, times(2)).updateLoginAttempts(eq(1), eq(0), isNull());
     }
+
+    @Test
+    public void testLogin_PlainTextPassword_SuccessAndUpgrade() throws AuthException {
+        testStaff.setPassword("plainText123");
+        when(staffDAO.getStaffByEmail("test@example.com")).thenReturn(testStaff);
+
+        Staff result = authService.login("test@example.com", "plainText123");
+
+        assertNotNull(result);
+        assertTrue(result.getPassword().startsWith("$2")); // Password upgraded to BCrypt
+        verify(staffDAO, times(1)).updatePassword(eq(1), anyString());
+    }
 }

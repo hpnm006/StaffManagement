@@ -42,8 +42,30 @@ public class AuthService {
         }
 
         // Verify password
-        if (BCrypt.checkpw(password, staff.getPassword())) {
+        boolean passwordMatch = false;
+        String storedPassword = staff.getPassword();
+        if (storedPassword != null && storedPassword.startsWith("$2")) {
+            try {
+                passwordMatch = BCrypt.checkpw(password, storedPassword);
+            } catch (IllegalArgumentException e) {
+                passwordMatch = password.equals(storedPassword);
+            }
+        } else {
+            passwordMatch = password.equals(storedPassword);
+        }
+
+        if (passwordMatch) {
             // Success
+            if (storedPassword == null || !storedPassword.startsWith("$2")) {
+                // Upgrade plain text password to BCrypt
+                try {
+                    String newHashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+                    staffDAO.updatePassword(staff.getStaffID(), newHashedPassword);
+                    staff.setPassword(newHashedPassword);
+                } catch (Exception e) {
+                    // Ignore upgrade errors so login isn't blocked
+                }
+            }
             if (hadFailedAttempts) {
                 staff.setFailedAttempts(0);
                 staff.setLockoutTime(null);
